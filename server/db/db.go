@@ -2,36 +2,27 @@ package db
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/bson"
+
+	"os"
+
+	"github.com/rs/zerolog/log"
 	"go.mongodb.org/mongo-driver/mongo"
-	"log"
-	"triparta/model"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type DB interface {
-	GetTechnologies() ([]*model.Technology, error)
-}
+func NewMongo() *mongo.Client {
 
-type MongoDB struct {
-	collection *mongo.Collection
-}
-
-func NewMongo(client *mongo.Client) DB {
-	tech := client.Database("tech").Collection("tech")
-	return MongoDB{collection: tech}
-}
-
-func (m MongoDB) GetTechnologies() ([]*model.Technology, error) {
-	res, err := m.collection.Find(context.TODO(), bson.M{})
+	client, err := mongo.Connect(context.Background(), clientOptions())
 	if err != nil {
-		log.Println("Error while fetching technologies:", err.Error())
-		return nil, err
+		log.Fatal().Err(err).Msg("Failed to connect to MongoDB")
 	}
-	var tech []*model.Technology
-	err = res.All(context.TODO(), &tech)
-	if err != nil {
-		log.Println("Error while decoding technologies:", err.Error())
-		return nil, err
-	}
-	return tech, nil
+
+	return client
+}
+
+func clientOptions() *options.ClientOptions {
+
+	return options.Client().ApplyURI(
+		os.Getenv("MONGO_URI"),
+	)
 }

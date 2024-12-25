@@ -1,10 +1,31 @@
-version: "3.8"
+version: "3.9"
+
 services:
-  dev_db:
-    image: mongo:6.0.3
-    environment:
-      MONGO_INITDB_DATABASE: tech
+  app:
+    build: .
+    container_name: triparta_app_dev
     ports:
-      - 27017:27017
+      - "9999:9999"
+    depends_on:
+      - db
+    env_file:
+      - ./server/.env
+      - ./webapp/.env
+    command: ["sh", "-c", "go run server.go & npm start"]
+    restart: unless-stopped
+
+  db:
+    image: mongo:jammy
+    container_name: triparta_db_dev
+    environment:
+      MONGO_INITDB_DATABASE: tripatra
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
+    ports:
+      - "27017:27017"
     volumes:
-      - ./init-db.js:/docker-entrypoint-initdb.d/init.js
+      - db_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  db_data:
